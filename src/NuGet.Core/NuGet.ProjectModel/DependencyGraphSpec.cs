@@ -130,6 +130,18 @@ namespace NuGet.ProjectModel
             _projects.Add(projectUniqueName, projectSpec);
         }
 
+        /// <summary>
+        /// Add all restorable projects to the restore list.
+        /// This is the behavior for --recursive
+        /// </summary>
+        public void AddRestoreForAllProjects()
+        {
+            // Add everything from projects except for packages.config and unknown project types
+            _restore.UnionWith(Projects.Where(project =>
+                RestorableTypes.Contains(project.RestoreMetadata.OutputType))
+                .Select(project => project.RestoreMetadata.ProjectUniqueName));
+        }
+
         public static DependencyGraphSpec Load(string path)
         {
             var json = ReadJson(path);
@@ -222,5 +234,13 @@ namespace NuGet.ProjectModel
 
             return json;
         }
+
+        private static HashSet<RestoreOutputType> RestorableTypes = new HashSet<RestoreOutputType>()
+        {
+            RestoreOutputType.DotnetCliTool,
+            RestoreOutputType.NETCore,
+            RestoreOutputType.Standalone,
+            RestoreOutputType.UAP
+        };
     }
 }

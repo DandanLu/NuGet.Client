@@ -38,6 +38,54 @@ namespace NuGet.ProjectModel.Test
         }
 
         [Fact]
+        public void DependencyGraphSpec_AddRestoreForAllProjects()
+        {
+            // Arrange
+            var json = JObject.Parse(ResourceTestUtility.GetResource("NuGet.ProjectModel.Test.compiler.resources.test1.dg", typeof(DependencyGraphSpecTests)));
+            var templateDg = DependencyGraphSpec.Load(json);
+            var dg = new DependencyGraphSpec();
+
+            foreach (var project in templateDg.Projects)
+            {
+                dg.AddProject(project);
+            }
+
+            // Act
+            dg.AddRestoreForAllProjects();
+
+            // Assert
+            Assert.Equal(3, dg.Restore.Count);
+            Assert.Equal(3, dg.Projects.Count);
+
+            foreach (var project in dg.Projects)
+            {
+                Assert.True(dg.Restore.Contains(project.RestoreMetadata.ProjectUniqueName));
+            }
+        }
+
+        [Fact]
+        public void DependencyGraphSpec_AddRestoreForAllProjects_SkipPackagesConfig()
+        {
+            // Arrange
+            var json = JObject.Parse(ResourceTestUtility.GetResource("NuGet.ProjectModel.Test.compiler.resources.test1.dg", typeof(DependencyGraphSpecTests)));
+            var templateDg = DependencyGraphSpec.Load(json);
+            var dg = new DependencyGraphSpec();
+
+            foreach (var project in templateDg.Projects)
+            {
+                project.RestoreMetadata.OutputType = RestoreOutputType.PackagesConfig;
+                dg.AddProject(project);
+            }
+
+            // Act
+            dg.AddRestoreForAllProjects();
+
+            // Assert
+            Assert.Equal(0, dg.Restore.Count);
+            Assert.Equal(3, dg.Projects.Count);
+        }
+
+        [Fact]
         public void DependencyGraphSpec_ReadEmptyJObject()
         {
             // Arrange
@@ -57,6 +105,19 @@ namespace NuGet.ProjectModel.Test
         {
             // Arrange && Act
             var dg = new DependencyGraphSpec();
+
+            // Assert
+            Assert.Equal(0, dg.Json.Properties().Count());
+            Assert.Equal(0, dg.Restore.Count);
+            Assert.Equal(0, dg.Projects.Count);
+        }
+
+        [Fact]
+        public void DependencyGraphSpec_AddRestoreForAllProjects_Empty()
+        {
+            // Arrange && Act
+            var dg = new DependencyGraphSpec();
+            dg.AddRestoreForAllProjects();
 
             // Assert
             Assert.Equal(0, dg.Json.Properties().Count());
